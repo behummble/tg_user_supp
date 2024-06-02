@@ -10,25 +10,26 @@ import (
 type Support struct {
 	log *slog.Logger
 	bot *tgbotapi.BotAPI
+	botService *csupp.BotService
 }
 
-func New(log *slog.Logger, token string) *Support {
+func New(log *slog.Logger, token string, botService *csupp.BotService) (*Support, error) {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	bot.Debug = true
 
-	return &Support{log, bot}
+	return &Support{log, bot, botService}, nil
 } 
 
-func(support *Support) StartListenUpdates() {
+func(support *Support) StartListenUpdates(timeout int) {
 	update := tgbotapi.NewUpdate(0)
-	update.Timeout = 10
+	update.Timeout = timeout
 	updates := support.bot.GetUpdatesChan(update)
 	for {
 		upd := <-updates
-		resp, err := csupp.ProcessUpdate(upd)
+		resp, err := support.botService.ProcessUpdate(upd)
 		if err != nil {
 			support.log.Error("ProcessUpdate", err)
 		}

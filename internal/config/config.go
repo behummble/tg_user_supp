@@ -10,17 +10,18 @@ import (
 )
 
 type Config struct {
-	DB DBConfig `yaml:"redis"`
+	Redis RedisConfig `yaml:"redis"`
 	Bot BotConfig `yaml:"bot"`
 }
 
-type DBConfig struct {
+type RedisConfig struct {
 	Host string `yaml:"host" env:"DB_HOST" env-default:"127.0.0.1"`
 	Port string `yaml:"port" env:"DB_PORT" env-default:"5432"`
+	Password string `yaml:"password" env:"REDIS_PASSWORD"`
 }
 
 type BotConfig struct {
-	Name string `yam:"name"`
+	Name string `yaml:"name"`
 	Token string `yaml:"token" env:"BOT_TOKEN"`
 	UpdateTimeout int `yaml:"timeout" env-default:"10"`
 }

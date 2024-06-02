@@ -5,14 +5,21 @@ import (
 	"os"
 
 	"github.com/behummble/csupp_bot/internal/config"
-	"github.com/behummble/csupp_bot/internal/app/support_bot"
+	"github.com/behummble/csupp_bot/internal/app"
 )
 
 func main() {
 	log := initLog()
 	config := config.MustLoad()
-	app := appsupportbot.New(log, config.Bot.Token)
-	app.StartListenUpdates()
+	app := app.New(
+		log, 
+		config.Bot.Token, 
+		config.Redis.Host, 
+		config.Redis.Port,
+		config.Redis.Password,
+	)
+	go app.Bot.StartListenUpdates(config.Bot.UpdateTimeout)
+	
 }
 
 func initLog() *slog.Logger {

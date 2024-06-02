@@ -1,10 +1,11 @@
 package redis
 
 import (
-	"log/slog"
-	"os"
 	"context"
+	"fmt"
+	"log/slog"
 	"time"
+
 	"github.com/redis/go-redis/v9"
 )
 
@@ -13,19 +14,19 @@ type Client struct {
 	conn *redis.Client
 }
 
-func New(log *slog.Logger) (*Client, error) {
-	conn, err := connect()
+func New(log *slog.Logger, host, port, password string) (Client, error) {
+	conn, err := connect(host, port, password)
 	if err != nil {
-		return nil, err
+		return Client{}, err
 	}
 
-	return &Client{log, conn}, nil
+	return Client{log, conn}, nil
 }
 
-func connect() (*redis.Client, error) {
+func connect(host, port, password string) (*redis.Client, error) {
 	options := &redis.Options{
-		Addr: os.Getenv("REDIS_ADDRES"),
-		Password: os.Getenv("REDIS_PASSWORD"),
+		Addr: fmt.Sprintf("%s:%s", host, port),
+		Password: password,
 	}
 
 	conn := redis.NewClient(options)
@@ -39,14 +40,17 @@ func connect() (*redis.Client, error) {
 	return conn, nil
 }
 
-func (client *Client) Push(botName, message string) {
-	_, err := client.conn.LPush(context.Background(), botName, message).Result()
-	if err != nil {
-		client.log.Error("PushMessage", err)
-	}
+func(client Client) Save(ctx context.Context, botName, msg string) error {
+	err := client.push(ctx, botName, msg)
+	return err
 }
 
-func (client *Client) Pop(botName string) []string {
+func (client Client) push(ctx context.Context,botName, message string) error {
+	_, err := client.conn.LPush(ctx, botName, message).Result()
+	return err
+}
+
+func (client Client) pop(botName string) []string {
 	messages, err := client.conn.BLPop(context.Background(), time.Second * 3, botName).Result()
 	if err != nil {
 		client.log.Error("PopMessage", err)
