@@ -50,11 +50,14 @@ func (client Client) push(ctx context.Context,botName, message string) error {
 	return err
 }
 
-func (client Client) pop(botName string) []string {
-	messages, err := client.conn.BLPop(context.Background(), time.Second * 3, botName).Result()
-	if err != nil {
-		client.log.Error("PopMessage", err)
-		return []string{}
+func (client Client) Pop(ctx context.Context, botName string, msgs chan<- string) {
+	for {
+		messages, err := client.conn.BLPop(context.Background(), time.Second * 3, botName).Result()
+		if err != nil {
+			client.log.Error("PopMessage", err)
+		}
+		for _, msg := range messages {
+			msgs<- msg
+		}
 	}
-	return messages
 } 

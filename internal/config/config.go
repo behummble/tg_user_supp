@@ -21,7 +21,6 @@ type RedisConfig struct {
 }
 
 type BotConfig struct {
-	Name string `yaml:"name"`
 	Token string `yaml:"token" env:"BOT_TOKEN"`
 	UpdateTimeout int `yaml:"timeout" env-default:"10"`
 }
