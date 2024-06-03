@@ -23,16 +23,20 @@ func New(log *slog.Logger, token string, botService *csupp.BotService) (*Support
 	return &Support{log, bot, botService}, nil
 } 
 
-func(support *Support) StartListenUpdates(timeout int) {
+func(support *Support) StartListenUpdates(timeout int, botName string) {
 	update := tgbotapi.NewUpdate(0)
 	update.Timeout = timeout
 	updates := support.bot.GetUpdatesChan(update)
+	
 	for {
 		upd := <-updates
-		resp, err := support.botService.ProcessUpdate(upd)
+		resp, err := support.botService.ProcessUpdate(upd, botName)
 		if err != nil {
 			support.log.Error("ProcessUpdate", err)
 		}
-		support.bot.Send(resp)
+		_, err = support.bot.Send(resp)
+		if err != nil {
+			support.log.Error("SendMessage", err)
+		}
 	}
 }

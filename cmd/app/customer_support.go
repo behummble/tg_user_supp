@@ -6,10 +6,12 @@ import (
 
 	"github.com/behummble/csupp_bot/internal/config"
 	"github.com/behummble/csupp_bot/internal/app"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	log := initLog()
+	setEnv()
 	config := config.MustLoad()
 	app := app.New(
 		log, 
@@ -18,8 +20,7 @@ func main() {
 		config.Redis.Port,
 		config.Redis.Password,
 	)
-	go app.Bot.StartListenUpdates(config.Bot.UpdateTimeout)
-	
+	app.Bot.StartListenUpdates(config.Bot.UpdateTimeout, config.Bot.Name)	
 }
 
 func initLog() *slog.Logger {
@@ -28,4 +29,11 @@ func initLog() *slog.Logger {
 		&slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	return log
+}
+
+func setEnv() {
+	err := godotenv.Load("../../.env")
+	if err != nil {
+		panic(err)
+	}
 }

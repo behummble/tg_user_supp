@@ -2,7 +2,7 @@ package config
 
 import (
 	"flag"
-	"fmt"
+	//"fmt"
 	"os"
 	"runtime"
 
@@ -23,6 +23,7 @@ type RedisConfig struct {
 type BotConfig struct {
 	Token string `yaml:"token" env:"BOT_TOKEN"`
 	UpdateTimeout int `yaml:"timeout" env-default:"10"`
+	Name string `yaml:"name"`
 }
 
 func MustLoad() *Config {
@@ -39,14 +40,17 @@ func loadPath() string {
 	flag.StringVar(&path, "config", "", "path to config file")
 	flag.Parse()
 	if path == "" {
-		curDir, err := os.Getwd()
+	/*	curDir, err := os.Getwd()
 		if err != nil {
 			panic(err)
 		}
+	*/
 		if runtime.GOOS == "windows" {
-			path = fmt.Sprintf("%s/config/config.yaml", curDir)
+			//path = fmt.Sprintf("%s\\config\\config.yaml", curDir)
+	
 		} else {
-			path = fmt.Sprintf("%s\\config\\config.yaml", curDir)
+			//path = fmt.Sprintf("%s/config/config.yaml", curDir)
+			path = "../../config/config.yaml"
 		}
 	}
 
