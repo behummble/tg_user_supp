@@ -42,8 +42,8 @@ func New(log *slog.Logger, saver MessageSaver) *BotService {
 	}
 }
 
-func(sbot *BotService) ProcessUpdate(upd tgbotapi.Update, botName string) (tgbotapi.MessageConfig, error) {
-	resp, err := sbot.handleEvent(upd, botName)
+func(sbot *BotService) ProcessUpdate(upd tgbotapi.Update, botName string, botID int64) (tgbotapi.MessageConfig, error) {
+	resp, err := sbot.handleEvent(upd, botName, botID)
 	if err != nil {
 		return errorResponse(upd.Message.Chat.ID), err
 	}
@@ -51,14 +51,13 @@ func(sbot *BotService) ProcessUpdate(upd tgbotapi.Update, botName string) (tgbot
 	return resp, nil
 }
 
-func(sbot *BotService) handleEvent(upd tgbotapi.Update, botName string) (tgbotapi.MessageConfig, error) {
-	// switch event and return 
+func(sbot *BotService) handleEvent(upd tgbotapi.Update, botName string, botID int64) (tgbotapi.MessageConfig, error) {
 	if upd.Message.IsCommand() {
 		return handleCommand(upd)
 	}
 	
 	if upd.Message.Text != "" {
-		msg, err := prepareMessage(upd)
+		msg, err := prepareMessage(upd, botID)
 		if err == nil {
 			err = sbot.Saver.Save(
 				context.Background(),
@@ -86,9 +85,9 @@ func handleCommand(upd tgbotapi.Update) (tgbotapi.MessageConfig, error) {
 	}
 }
 
-func prepareMessage(upd tgbotapi.Update) (string, error) {
+func prepareMessage(upd tgbotapi.Update, botID int64) (string, error) {
 	msg := Message {
-		upd.Message.ViaBot.ID,
+		botID,
 		upd.Message.Chat.ID,
 		upd.Message.From.ID,
 		upd.Message.From.UserName,

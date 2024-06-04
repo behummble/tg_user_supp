@@ -30,7 +30,11 @@ func(support *Support) StartListenUpdates(timeout int, botName string) {
 	
 	for {
 		upd := <-updates
-		resp, err := support.botService.ProcessUpdate(upd, botName)
+		me, err := support.bot.GetMe()
+		if err != nil {
+			continue
+		}
+		resp, err := support.botService.ProcessUpdate(upd, me.UserName, me.ID)
 		if err != nil {
 			support.log.Error("ProcessUpdate", err)
 		}

@@ -15,8 +15,8 @@ type Config struct {
 }
 
 type RedisConfig struct {
-	Host string `yaml:"host" env:"DB_HOST" env-default:"127.0.0.1"`
-	Port string `yaml:"port" env:"DB_PORT" env-default:"5432"`
+	Host string `yaml:"host" env:"REDIS_HOST" env-default:"127.0.0.1"`
+	Port string `yaml:"port" env:"REDIS_PORT" env-default:"6379"`
 	Password string `yaml:"password" env:"REDIS_PASSWORD"`
 }
 
@@ -40,16 +40,9 @@ func loadPath() string {
 	flag.StringVar(&path, "config", "", "path to config file")
 	flag.Parse()
 	if path == "" {
-	/*	curDir, err := os.Getwd()
-		if err != nil {
-			panic(err)
-		}
-	*/
 		if runtime.GOOS == "windows" {
-			//path = fmt.Sprintf("%s\\config\\config.yaml", curDir)
-	
+			path = "..\\..\\config\\config.yaml"
 		} else {
-			//path = fmt.Sprintf("%s/config/config.yaml", curDir)
 			path = "../../config/config.yaml"
 		}
 	}
