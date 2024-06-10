@@ -47,16 +47,17 @@ func New(log *slog.Logger, saver MessageSaver) *BotService {
 	}
 }
 
-func(sbot *BotService) ProcessUpdate(upd tgbotapi.Update, botName string, botID int64) (tgbotapi.MessageConfig, error) {
-	resp, err := sbot.handleEvent(upd, botID)
+func(sbot *BotService) ProcessUpdate(upd tgbotapi.Update, botName string, botID int64) (tgbotapi.MessageConfig) {
+	resp, err := sbot.handleEvent(upd, botID, botName)
 	if err != nil {
-		return errorResponse(upd.Message.Chat.ID), err
+		sbot.log.Error("ProcessError", err)
+		return errorResponse(upd.Message.Chat.ID)
 	}
 
-	return resp, nil
+	return resp
 }
 
-func(sbot *BotService) handleEvent(upd tgbotapi.Update, botID int64) (tgbotapi.MessageConfig, error) {
+func(sbot *BotService) handleEvent(upd tgbotapi.Update, botID int64, botName string) (tgbotapi.MessageConfig, error) {
 	if upd.Message.IsCommand() {
 		return handleCommand(upd)
 	}
@@ -66,7 +67,7 @@ func(sbot *BotService) handleEvent(upd tgbotapi.Update, botID int64) (tgbotapi.M
 		if err == nil {
 			err = sbot.Saver.Save(
 				context.Background(),
-				fmt.Sprintf(messagesQueue, botID),
+				fmt.Sprintf(messagesQueue, botName),
 				msg,
 			)
 		}

@@ -27,20 +27,18 @@ func(support *Support) StartListenUpdates(timeout int, botName string) {
 	update := tgbotapi.NewUpdate(0)
 	update.Timeout = timeout
 	updates := support.bot.GetUpdatesChan(update)
-	
+	me, _ := support.bot.GetMe()
+
 	for {
 		upd := <-updates
-		me, err := support.bot.GetMe()
-		if err != nil {
-			continue
-		}
-		resp, err := support.botService.ProcessUpdate(upd, me.UserName, me.ID)
-		if err != nil {
+		resp := support.botService.ProcessUpdate(upd, me.UserName, me.ID)
+		
+		/*if err != nil {
 			support.log.Error("ProcessUpdate", err)
-		}
-		_, err = support.bot.Send(resp)
+		} */
+		_, err := support.bot.Send(resp)
 		if err != nil {
 			support.log.Error("SendMessage", err)
-		}
+		} 
 	}
 }
