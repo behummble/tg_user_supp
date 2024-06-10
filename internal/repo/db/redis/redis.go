@@ -45,6 +45,11 @@ func(client Client) Save(ctx context.Context, botName, msg string) error {
 	return err
 }
 
+func (client Client) Topic(ctx context.Context, topicKey string) (string, error) {
+	val, err := client.conn.Get(ctx, topicKey).Result()
+	return val, err
+}
+
 func (client Client) push(ctx context.Context,botName, message string) error {
 	_, err := client.conn.LPush(ctx, botName, message).Result()
 	return err

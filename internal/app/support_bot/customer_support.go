@@ -2,43 +2,43 @@ package appsupportbot
 
 import (
 	"log/slog"
-
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"time"
+	"gopkg.in/telebot.v3"
 	csupp "github.com/behummble/csupp_bot/internal/service/support_bot"
 )
 
 type Support struct {
 	log *slog.Logger
-	bot *tgbotapi.BotAPI
+	bot *telebot.Bot
 	botService *csupp.BotService
 }
 
-func New(log *slog.Logger, token string, botService *csupp.BotService) (*Support, error) {
-	bot, err := tgbotapi.NewBotAPI(token)
+func New(log *slog.Logger, token string, timeout int, botService *csupp.BotService) (*Support, error) {
+	bot, err := telebot.NewBot(
+		telebot.Settings{
+			Token: token,
+			Poller: &telebot.LongPoller{Timeout: time.Second * time.Duration(timeout)},
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
-	bot.Debug = true
 
 	return &Support{log, bot, botService}, nil
 } 
 
-func(support *Support) StartListenUpdates(timeout int, botName string) {
-	update := tgbotapi.NewUpdate(0)
-	update.Timeout = timeout
-	updates := support.bot.GetUpdatesChan(update)
-	me, _ := support.bot.GetMe()
+func(support *Support) ListenUpdates(timeout int, botName string) {
+	support.bot.Handle(telebot.OnText, support.TextHandler)
+	support.bot.Start()
+}
 
-	for {
-		upd := <-updates
-		resp := support.botService.ProcessUpdate(upd, me.UserName, me.ID)
-		
-		/*if err != nil {
-			support.log.Error("ProcessUpdate", err)
-		} */
-		_, err := support.bot.Send(resp)
-		if err != nil {
-			support.log.Error("SendMessage", err)
-		} 
+func(support *Support) TextHandler(upd telebot.Context) error {
+	name := support.bot.Me.Username
+	id := support.bot.Me.ID
+	resp, err := support.botService.ProcessUpdate(upd, name, id)
+	if err != nil {
+		return err
 	}
+
+	return upd.Send(resp)
 }

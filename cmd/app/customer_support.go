@@ -15,12 +15,8 @@ func main() {
 	config := config.MustLoad()
 	app := app.New(
 		log, 
-		config.Bot.Token, 
-		config.Redis.Host, 
-		config.Redis.Port,
-		config.Redis.Password,
-	)
-	app.Bot.StartListenUpdates(config.Bot.UpdateTimeout, config.Bot.Name)	
+		config)
+	app.Bot.ListenUpdates(config.Bot.UpdateTimeout, config.Bot.Name)	
 }
 
 func initLog() *slog.Logger {
