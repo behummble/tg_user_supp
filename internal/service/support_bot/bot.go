@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"gopkg.in/telebot.v3"
-	"golang.org/x/net/websocket"
 )
 
 const (
@@ -28,10 +27,14 @@ type DB interface {
 	Topic(ctx context.Context, topicKey string) (string, error)
 }
 
+type UserSupport interface {
+	Send(ctx context.Context, payload string) error
+}
+
 type BotService struct {
 	log *slog.Logger
 	db DB
-	ws *websocket.Conn
+	userSupport UserSupport
 }
 
 type Message struct {
@@ -56,17 +59,12 @@ type SupportMessage struct {
 	Text string
 }
 
-func New(log *slog.Logger, saver DB, host, path string, port int) *BotService {
-	origin := fmt.Sprintf("http://%s:%d/", host, port)
-	url := fmt.Sprintf("ws://%s:%d/%s", host, port, path)
-	ws, err := websocket.Dial(url, "", origin)
-	if err != nil {
-		panic(err)
-	}
+func New(log *slog.Logger, saver DB, userSupport UserSupport) *BotService {
+	
 	return &BotService{
 		log,
 		saver,
-		ws,
+		userSupport,
 	}
 }
 
@@ -94,7 +92,7 @@ func(sbot *BotService) handleEvent(upd telebot.Context, botID int64, botName str
 			sbot.log.Error("GetTopicData", err)
 			return "", nil
 		}
-		err = handleSupportMessage(sbot.ws, data, upd.Text())
+		err = handleSupportMessage(sbot.userSupport, data, upd.Text())
 		if err != nil {
 			sbot.log.Error("HandleSupportMessage", err)
 		}
@@ -142,7 +140,7 @@ func handleCommand(upd telebot.Context) (string, error) {
 	}
 }
 
-func handleSupportMessage(ws *websocket.Conn, topicStr, payload string) error {
+func handleSupportMessage(userSupport UserSupport ,topicStr, payload string) error {
 	topicData, err := parseTopic(topicStr)
 	if err != nil {
 		return err
@@ -152,7 +150,7 @@ func handleSupportMessage(ws *websocket.Conn, topicStr, payload string) error {
 		return err
 	} 
 	
-	if err = websocket.Message.Send(ws, msg); err != nil {
+	if err = userSupport.Send(context.Background(), msg); err != nil {
 		return err
 	}
 	return nil

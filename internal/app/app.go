@@ -5,6 +5,7 @@ import (
 
 	appbot "github.com/behummble/csupp_bot/internal/app/support_bot"
 	"github.com/behummble/csupp_bot/internal/repo/db/redis"
+	"github.com/behummble/csupp_bot/internal/repo/external_service/websocket/support_line"
 	"github.com/behummble/csupp_bot/internal/service/support_bot"
 	"github.com/behummble/csupp_bot/internal/config"
 )
@@ -22,12 +23,16 @@ func New(log *slog.Logger, config *config.Config) App {
 	if err != nil {
 		panic(err)
 	}
+
+	supportLine := supportline.New(
+		config.Server.Host, 
+		config.Server.Path, 
+		config.Server.Port)
+
 	botService := supportbot.New(
 		log, 
 		db,
-		config.Server.Host,
-		config.Server.Path,
-		config.Server.Port)
+		supportLine)
 
 	appBot, err := appbot.New(
 		log, 
