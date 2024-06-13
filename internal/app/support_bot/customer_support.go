@@ -28,11 +28,41 @@ func New(log *slog.Logger, token string, timeout int, botService *csupp.BotServi
 } 
 
 func(support *Support) ListenUpdates(timeout int, botName string) {
-	support.bot.Handle(telebot.OnText, support.TextHandler)
+	support.bot.Handle(telebot.OnText, support.textHandler)
+	support.bot.Handle(telebot.OnAudio, support.audioHandler)
+	support.bot.Handle(telebot.OnSticker, support.stickerHandler)
+	support.bot.Handle(telebot.OnVideo, support.videoHandler)
+	support.bot.Handle(telebot.OnAudio, support.audioHandler)
+	support.bot.Handle(telebot.OnVoice, support.voiceHandler)
+	support.bot.Handle(telebot.OnPhoto, support.photoHandler)
 	support.bot.Start()
 }
 
-func(support *Support) TextHandler(upd telebot.Context) error {
+func(support *Support) textHandler(upd telebot.Context) error {
+	return support.handleUpdate(upd)
+}
+
+func(support *Support) audioHandler(upd telebot.Context) error {
+	return support.handleUpdate(upd)
+}
+
+func(support *Support) stickerHandler(upd telebot.Context) error {
+	return support.handleUpdate(upd)
+}
+
+func(support *Support) videoHandler(upd telebot.Context) error {
+	return support.handleUpdate(upd)
+}
+
+func(support *Support) voiceHandler(upd telebot.Context) error {
+	return support.handleUpdate(upd)
+}
+
+func(support *Support) photoHandler(upd telebot.Context) error {
+	return support.handleUpdate(upd)
+}
+
+func (support *Support) handleUpdate(upd telebot.Context) error {
 	name := support.bot.Me.Username
 	id := support.bot.Me.ID
 	resp, err := support.botService.ProcessUpdate(upd, name, id)

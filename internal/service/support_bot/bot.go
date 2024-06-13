@@ -99,7 +99,7 @@ func(sbot *BotService) handleEvent(upd telebot.Context, botID int64, botName str
 		return "", nil
 	}
 
-	if upd.Text() != "" {
+//	if upd.Text() != "" {
 		msg, err := prepareMessage(upd, botID)
 		if err == nil {
 			err = sbot.db.Save(
@@ -110,9 +110,10 @@ func(sbot *BotService) handleEvent(upd telebot.Context, botID int64, botName str
 		}
 		
 		return "", err
-	}
+		
+//	}
 
-	return "", nil
+	//return "", nil
 }
 
 func executeTopicID(upd telebot.Context) int {
