@@ -6,4 +6,4 @@ bot:
 ws_server:
    host: localhost
    port: 8080
-   path: support
+   path: user/message

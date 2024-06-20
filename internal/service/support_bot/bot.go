@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"gopkg.in/telebot.v3"
+	"github.com/behummble/csupp_bot/pkg/crypto"
 )
 
 const (
@@ -38,7 +39,7 @@ type BotService struct {
 }
 
 type Message struct {
-	BotID int64
+	BotToken string
 	ChatID int64
 	UserID int64
 	UserName string
@@ -101,12 +102,15 @@ func(sbot *BotService) handleEvent(upd telebot.Context, botID int64, botName str
 
 //	if upd.Text() != "" {
 		msg, err := prepareMessage(upd, botID)
-		if err == nil {
+		/*if err == nil {
 			err = sbot.db.Save(
 				context.Background(),
 				fmt.Sprintf(messagesQueue, botName),
 				msg,
 			)
+		} */
+		if err == nil {
+			err = sbot.userSupport.Send(context.Background(), msg)	
 		}
 		
 		return "", err
@@ -158,8 +162,14 @@ func handleSupportMessage(userSupport UserSupport ,topicStr, payload string) err
 }
 
 func prepareMessage(upd telebot.Context, botID int64) (string, error) {
+	token, err := crypto.DecryptData([]byte(upd.Bot().Token))
+
+	if err != nil {
+		return "", err
+	}
+	
 	msg := Message {
-		botID,
+		token,
 		upd.Chat().ID,
 		upd.Message().Sender.ID,
 		fmt.Sprintf("%s %s",upd.Message().Sender.FirstName, upd.Message().Sender.LastName),
@@ -168,6 +178,7 @@ func prepareMessage(upd telebot.Context, botID int64) (string, error) {
 	}
 
 	payload, err := json.Marshal(msg)
+	
 	return string(payload), err
 }
 
