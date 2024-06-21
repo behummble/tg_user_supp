@@ -162,7 +162,7 @@ func handleSupportMessage(userSupport UserSupport ,topicStr, payload string) err
 }
 
 func prepareMessage(upd telebot.Context, botID int64) (string, error) {
-	token, err := crypto.DecryptData([]byte(upd.Bot().Token))
+	token, err := crypto.EncryptData([]byte(upd.Bot().Token))
 
 	if err != nil {
 		return "", err
