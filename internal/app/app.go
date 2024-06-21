@@ -26,7 +26,6 @@ func New(log *slog.Logger, config *config.Config) App {
 
 	supportLine := supportline.New(
 		config.Server.Host, 
-		config.Server.Path, 
 		config.Server.Port)
 
 	botService := supportbot.New(

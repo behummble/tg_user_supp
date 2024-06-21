@@ -29,7 +29,8 @@ type DB interface {
 }
 
 type UserSupport interface {
-	Send(ctx context.Context, payload string) error
+	SendToUser(ctx context.Context, payload string) error
+	SendToSupport(ctx context.Context, payload string) error
 }
 
 type BotService struct {
@@ -48,16 +49,17 @@ type Message struct {
 }
 
 type TopicData struct {
-	BotID int64
+	BotToken string
 	ChatID int64
 	UserID int64
 	TopicID int
 }
 
 type SupportMessage struct {
+	BotToken string
 	ChatID int64
 	TopicID int
-	Text string
+	Payload string
 }
 
 func New(log *slog.Logger, saver DB, userSupport UserSupport) *BotService {
@@ -93,6 +95,11 @@ func(sbot *BotService) handleEvent(upd telebot.Context, botID int64, botName str
 			sbot.log.Error("GetTopicData", err)
 			return "", nil
 		}
+		data, err = crypto.DecryptData(data)
+		if err != nil {
+			sbot.log.Error("EncryptTopicData", err)
+			return "", nil
+		}
 		err = handleSupportMessage(sbot.userSupport, data, upd.Text())
 		if err != nil {
 			sbot.log.Error("HandleSupportMessage", err)
@@ -100,24 +107,12 @@ func(sbot *BotService) handleEvent(upd telebot.Context, botID int64, botName str
 		return "", nil
 	}
 
-//	if upd.Text() != "" {
-		msg, err := prepareMessage(upd, botID)
-		/*if err == nil {
-			err = sbot.db.Save(
-				context.Background(),
-				fmt.Sprintf(messagesQueue, botName),
-				msg,
-			)
-		} */
-		if err == nil {
-			err = sbot.userSupport.Send(context.Background(), msg)	
-		}
-		
-		return "", err
-		
-//	}
+	msg, err := prepareMessage(upd, botID)
 
-	//return "", nil
+	if err == nil {
+		err = sbot.userSupport.SendToSupport(context.Background(), msg)	
+	}
+	return "", err
 }
 
 func executeTopicID(upd telebot.Context) int {
@@ -155,7 +150,7 @@ func handleSupportMessage(userSupport UserSupport ,topicStr, payload string) err
 		return err
 	} 
 	
-	if err = userSupport.Send(context.Background(), msg); err != nil {
+	if err = userSupport.SendToUser(context.Background(), msg); err != nil {
 		return err
 	}
 	return nil
@@ -217,7 +212,12 @@ func parseTopic(data string) (TopicData, error) {
 }
 
 func prepareSupportMessage(topic TopicData, payload string) (string, error) {
+	encToken, err := crypto.EncryptData([]byte(topic.BotToken))
+	if err != nil {
+		return "", err
+	}
 	data := SupportMessage{
+		encToken,
 		topic.ChatID,
 		topic.TopicID,
 		payload,

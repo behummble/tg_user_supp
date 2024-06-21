@@ -7,6 +7,11 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+const (
+	userMessagePath = "user/message"
+	supportMessagePath = "support/message"
+)
+
 type SupportLine struct {
 	conn connect
 }
@@ -14,12 +19,11 @@ type SupportLine struct {
 type connect struct {
 	host string
 	port int
-	path string
 }
 
-func New(host, path string, port int)  SupportLine {
+func New(host string, port int)  SupportLine {
 	sLine := SupportLine{
-		conn: connect{host, port, path},
+		conn: connect{host, port},
 	}
 	err := sLine.ping()
 	if err != nil {
@@ -29,8 +33,8 @@ func New(host, path string, port int)  SupportLine {
 	return sLine
 }
 
-func (sLine SupportLine) Send(ctx context.Context, payload string) error {
-	ws, err := sLine.connect()
+func (sLine SupportLine) SendToUser(ctx context.Context, payload string) error {
+	ws, err := sLine.connect(supportMessagePath)
 	if err != nil {
 		return err
 	}
@@ -39,9 +43,19 @@ func (sLine SupportLine) Send(ctx context.Context, payload string) error {
 	return err
 }
 
-func (sLine SupportLine) connect() (*websocket.Conn, error) {
+func (sLine SupportLine) SendToSupport(ctx context.Context, payload string) error {
+	ws, err := sLine.connect(userMessagePath)
+	if err != nil {
+		return err
+	}
+	defer ws.Close()
+	err = websocket.Message.Send(ws, payload)
+	return err
+}
+
+func (sLine SupportLine) connect(path string) (*websocket.Conn, error) {
 	origin := fmt.Sprintf("http://%s:%d/", sLine.conn.host, sLine.conn.port)
-	url := fmt.Sprintf("ws://%s:%d/%s", sLine.conn.host, sLine.conn.port, sLine.conn.path)
+	url := fmt.Sprintf("ws://%s:%d/%s", sLine.conn.host, sLine.conn.port, path)
 	ws, err := websocket.Dial(url, "", origin)
 	if err != nil {
 		return nil, err
@@ -51,7 +65,7 @@ func (sLine SupportLine) connect() (*websocket.Conn, error) {
 }
 
 func (sLine SupportLine) ping() error {
-	ws, err := sLine.connect()
+	ws, err := sLine.connect("ping")
 	if err != nil {
 		return err
 	}
