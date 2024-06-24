@@ -88,19 +88,12 @@ func(sbot *BotService) handleEvent(upd telebot.Context, botID int64, botName str
 	
 	topicID := executeTopicID(upd)
 	if topicID != 0 { 
-		data, err := sbot.db.Topic(
-			context.Background(), 
-			fmt.Sprintf(topicQueue, topicID))
-		if err != nil {
-			sbot.log.Error("GetTopicData", err)
-			return "", nil
-		}
-		data, err = crypto.DecryptData(data)
-		if err != nil {
-			sbot.log.Error("EncryptTopicData", err)
-			return "", nil
-		}
-		err = handleSupportMessage(sbot.userSupport, data, upd.Text())
+		err := handleSupportMessage(
+			sbot.userSupport, 
+			upd.Bot().Token,
+			upd.Chat().ID,
+			topicID, 
+			upd.Text())
 		if err != nil {
 			sbot.log.Error("HandleSupportMessage", err)
 		}
@@ -140,12 +133,9 @@ func handleCommand(upd telebot.Context) (string, error) {
 	}
 }
 
-func handleSupportMessage(userSupport UserSupport ,topicStr, payload string) error {
-	topicData, err := parseTopic(topicStr)
-	if err != nil {
-		return err
-	}
-	msg, err := prepareSupportMessage(topicData, payload)
+func handleSupportMessage(userSupport UserSupport ,token string, chatID int64, topicID int, payload string) error {
+	
+	msg, err := prepareSupportMessage(token, chatID, topicID, payload)
 	if err != nil {
 		return err
 	} 
@@ -211,15 +201,15 @@ func parseTopic(data string) (TopicData, error) {
 	return topic, err
 }
 
-func prepareSupportMessage(topic TopicData, payload string) (string, error) {
-	encToken, err := crypto.EncryptData([]byte(topic.BotToken))
+func prepareSupportMessage(token string, chatID int64, topicID int, payload string) (string, error) {
+	encToken, err := crypto.EncryptData([]byte(token))
 	if err != nil {
 		return "", err
 	}
 	data := SupportMessage{
 		encToken,
-		topic.ChatID,
-		topic.TopicID,
+		chatID,
+		topicID,
 		payload,
 	}
 

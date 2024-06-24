@@ -30,7 +30,6 @@ type BotConfig struct {
 type ServerConfig struct {
 	Host string `yaml:"host"`
 	Port int `yaml:"port"`
-	Path string `yaml:"path"`
 }
 
 func MustLoad() *Config {
