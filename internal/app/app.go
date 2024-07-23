@@ -31,7 +31,8 @@ func New(log *slog.Logger, config *config.Config) App {
 	botService := supportbot.New(
 		log, 
 		db,
-		supportLine)
+		supportLine,
+		config.Bot.GroupChatID)
 
 	appBot, err := appbot.New(
 		log, 

@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"gopkg.in/telebot.v3"
+
 	"github.com/behummble/csupp_bot/pkg/crypto"
+	"gopkg.in/telebot.v3"
 )
 
 const (
@@ -37,6 +38,7 @@ type BotService struct {
 	log *slog.Logger
 	db DB
 	userSupport UserSupport
+	groupChatID int64
 }
 
 type Message struct {
@@ -46,6 +48,7 @@ type Message struct {
 	UserName string
 	Payload string
 	MessageID int64
+	GroupChatID int64
 }
 
 type TopicData struct {
@@ -62,12 +65,13 @@ type SupportMessage struct {
 	Payload string
 }
 
-func New(log *slog.Logger, saver DB, userSupport UserSupport) *BotService {
+func New(log *slog.Logger, saver DB, userSupport UserSupport, chatID int64) *BotService {
 	
 	return &BotService{
 		log,
 		saver,
 		userSupport,
+		chatID,
 	}
 }
 
@@ -100,7 +104,7 @@ func(sbot *BotService) handleEvent(upd telebot.Context, botID int64, botName str
 		return "", nil
 	}
 
-	msg, err := prepareMessage(upd, botID)
+	msg, err := prepareMessage(upd, botID, sbot.groupChatID)
 
 	if err == nil {
 		err = sbot.userSupport.SendToSupport(context.Background(), msg)	
@@ -146,7 +150,7 @@ func handleSupportMessage(userSupport UserSupport ,token string, chatID int64, t
 	return nil
 }
 
-func prepareMessage(upd telebot.Context, botID int64) (string, error) {
+func prepareMessage(upd telebot.Context, botID int64, groupChatID int64) (string, error) {
 	token, err := crypto.EncryptData([]byte(upd.Bot().Token))
 
 	if err != nil {
@@ -160,6 +164,7 @@ func prepareMessage(upd telebot.Context, botID int64) (string, error) {
 		fmt.Sprintf("%s %s",upd.Message().Sender.FirstName, upd.Message().Sender.LastName),
 		upd.Text(),
 		int64(upd.Message().ID),
+		groupChatID,
 	}
 
 	payload, err := json.Marshal(msg)

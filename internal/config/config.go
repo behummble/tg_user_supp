@@ -25,6 +25,7 @@ type BotConfig struct {
 	Token string `yaml:"token" env:"BOT_TOKEN"`
 	UpdateTimeout int `yaml:"timeout" env-default:"10"`
 	Name string `yaml:"name"`
+	GroupChatID int64 `yaml:"password" env:"GROUP_CHAT_ID"`
 }
 
 type ServerConfig struct {
