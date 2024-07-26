@@ -63,6 +63,7 @@ type SupportMessage struct {
 	ChatID int64
 	TopicID int
 	Payload string
+	MessageID int
 }
 
 func New(log *slog.Logger, saver DB, userSupport UserSupport, chatID int64) *BotService {
@@ -97,7 +98,8 @@ func(sbot *BotService) handleEvent(upd telebot.Context, botID int64, botName str
 			upd.Bot().Token,
 			upd.Chat().ID,
 			topicID, 
-			upd.Text())
+			upd.Text(),
+			upd.Message().ID)
 		if err != nil {
 			sbot.log.Error("HandleSupportMessage", err)
 		}
@@ -137,9 +139,9 @@ func handleCommand(upd telebot.Context) (string, error) {
 	}
 }
 
-func handleSupportMessage(userSupport UserSupport ,token string, chatID int64, topicID int, payload string) error {
+func handleSupportMessage(userSupport UserSupport ,token string, chatID int64, topicID int, payload string, messageID int) error {
 	
-	msg, err := prepareSupportMessage(token, chatID, topicID, payload)
+	msg, err := prepareSupportMessage(token, chatID, topicID, payload, messageID)
 	if err != nil {
 		return err
 	} 
@@ -206,7 +208,7 @@ func parseTopic(data string) (TopicData, error) {
 	return topic, err
 }
 
-func prepareSupportMessage(token string, chatID int64, topicID int, payload string) (string, error) {
+func prepareSupportMessage(token string, chatID int64, topicID int, payload string, messageID int) (string, error) {
 	encToken, err := crypto.EncryptData([]byte(token))
 	if err != nil {
 		return "", err
@@ -216,6 +218,7 @@ func prepareSupportMessage(token string, chatID int64, topicID int, payload stri
 		chatID,
 		topicID,
 		payload,
+		messageID,
 	}
 
 	res, err := json.Marshal(data)
